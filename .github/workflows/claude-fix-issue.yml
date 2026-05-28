@@ -5,9 +5,10 @@ on:
     types: [created]
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: write        # push fix branch
+  pull-requests: write   # open PR
+  issues: write          # comment on issue
+  id-token: write        # REQUIRED by claude-code-action for OIDC auth
 
 jobs:
   claude-fix:
@@ -23,19 +24,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: anthropics/claude-code-action@v1
         with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install openai PyGithub
-
-      - name: Fix issue via GitHub Models (no API key needed)
-        env:
-          GITHUB_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
-          REPO:          ${{ github.repository }}
-          ISSUE_NUMBER:  ${{ github.event.issue.number }}
-          ISSUE_TITLE:   ${{ github.event.issue.title }}
-          ISSUE_BODY:    ${{ github.event.issue.body }}
-          COMMENT_BODY:  ${{ github.event.comment.body }}
-        run: python .github/scripts/claude_fix.py
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          trigger_phrase: "@claude"
+          base_branch: main
+          branch_prefix: "fix/"
+          prompt: |
+            Read the issue title and description carefully, then implement the necessary code changes to resolve it.
+            After implementing the fix, create a pull request with:
+            - Title: a concise "fix: <what was resolved>" derived from the actual changes made
+            - Description with these sections:
+              ## Summary
+              What the issue was and how it was fixed.
+              ## Changes
+              Bullet list of files/functions modified and why.
+              ## How to verify
+              Steps to confirm the fix works.
+              ---
+              Closes #${{ github.event.issue.number }}
