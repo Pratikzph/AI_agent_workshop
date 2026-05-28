@@ -8,6 +8,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  id-token: write        # required by claude-code-action for OIDC auth
 
 jobs:
   claude-fix:
@@ -23,7 +24,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           trigger_phrase: ""
-          base_branch: dev
+          base_branch: main
           branch_prefix: "fix/"
           prompt: |
             Read the issue title and description carefully, then implement the necessary code changes to resolve it.
