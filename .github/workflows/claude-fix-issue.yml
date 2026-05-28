@@ -8,34 +8,34 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
-  id-token: write        # required by claude-code-action for OIDC auth
 
 jobs:
   claude-fix:
     runs-on: ubuntu-latest
+
+    # Only fire on issue comments (not PR comments) that mention @claude
+    if: |
+      !github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude')
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: anthropics/claude-code-action@v1
+      - uses: actions/setup-python@v5
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          trigger_phrase: "@claude"
-          base_branch: main
-          branch_prefix: "fix/"
-          prompt: |
-            Read the issue title and description carefully, then implement the necessary code changes to resolve it.
-            After implementing the fix, create a pull request with:
-            - Title: a concise "fix: <what was resolved>" derived from the actual changes made
-            - Description with these sections:
-              ## Summary
-              What the issue was and how it was fixed.
-              ## Changes
-              Bullet list of files/functions modified and why.
-              ## How to verify
-              Steps to confirm the fix works.
-              ---
-              Closes #${{ github.event.issue.number }}
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install openai PyGithub
+
+      - name: Fix issue via GitHub Models (no API key needed)
+        env:
+          GITHUB_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
+          REPO:          ${{ github.repository }}
+          ISSUE_NUMBER:  ${{ github.event.issue.number }}
+          ISSUE_TITLE:   ${{ github.event.issue.title }}
+          ISSUE_BODY:    ${{ github.event.issue.body }}
+          COMMENT_BODY:  ${{ github.event.comment.body }}
+        run: python .github/scripts/claude_fix.py
