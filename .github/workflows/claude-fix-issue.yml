@@ -1,0 +1,65 @@
+name: Claude Auto-Fix Issues
+
+# Triggers:
+#   1. Comment "@claude fix this" (or any @claude mention) on an issue
+#   2. Label an issue with "auto-fix" to kick off an autonomous fix
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+
+jobs:
+  fix-issue:
+    name: Fix issue with Claude
+    runs-on: ubuntu-latest
+
+    # Only run when:
+    #   - A comment mentions @claude, OR
+    #   - The "auto-fix" label is added to an issue
+    if: |
+      (github.event_name == 'issue_comment' &&
+       !github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' &&
+       github.event.action == 'labeled' &&
+       github.event.label.name == 'auto-fix')
+
+    permissions:
+      contents: write        # push fix branch
+      issues: write          # comment on the issue
+      pull-requests: write   # open a PR with the fix
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # full history so Claude has context
+
+      - name: Run Claude to analyse and fix the issue
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # Extra instructions prepended to every run.
+          # Claude already receives the full issue body and thread automatically.
+          prompt: |
+            You are an expert software engineer. An issue has been filed in this
+            repository. Your job is to:
+
+            1. Read the issue title, body, and any comments carefully.
+            2. Identify the root cause in the codebase.
+            3. Implement a minimal, correct fix — no unrelated changes.
+            4. Commit the changes to a new branch named fix/issue-<issue-number>.
+            5. Open a pull request that references the issue (Closes #<issue-number>).
+            6. Leave a brief comment on the issue explaining the fix and linking the PR.
+
+            Guidelines:
+            - Keep changes focused on the reported problem only.
+            - Do not add features or refactor unrelated code.
+            - Follow the existing code style of the project.
+            - If the issue is unclear or cannot be fixed automatically, say so in a
+              comment and ask for clarification instead of guessing.
+
+          # Cap agentic turns to avoid runaway usage
+          claude_args: "--max-turns 15 --model claude-opus-4-7"
