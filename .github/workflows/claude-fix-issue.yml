@@ -29,6 +29,7 @@ jobs:
       contents: write        # push fix branch
       issues: write          # comment on the issue
       pull-requests: write   # open a PR with the fix
+      id-token: write        # required by claude-code-action for OIDC auth
 
     steps:
       - name: Checkout repository
