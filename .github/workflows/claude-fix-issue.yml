@@ -1,8 +1,8 @@
 name: Claude Code Issue Fixer
 
 on:
-  issues:
-    types: [opened]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
@@ -23,7 +23,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          trigger_phrase: ""
+          trigger_phrase: "@claude"
           base_branch: main
           branch_prefix: "fix/"
           prompt: |
