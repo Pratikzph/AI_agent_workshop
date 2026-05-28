@@ -14,6 +14,7 @@ jobs:
   claude-fix:
     runs-on: ubuntu-latest
 
+    # Trigger only on issue comments (not PR comments) containing @claude
     if: |
       !github.event.issue.pull_request &&
       contains(github.event.comment.body, '@claude')
@@ -28,21 +29,18 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           trigger_phrase: "@claude"
-          base_branch: main
-          branch_prefix: "fix/"
           show_full_output: true
           direct_prompt: |
-            Fix the GitHub issue described above.
+            You are an automated issue fixer. The triggering issue number is ${{ github.event.issue.number }}.
 
-            Steps you MUST follow:
-            1. Read the issue title and body carefully — they are already in your context.
-            2. Explore the repository files to understand the current state of the code.
-            3. Make the necessary file edits or create new files to resolve the issue.
-            4. Run: git checkout -b fix/issue-$ISSUE_NUMBER
-            5. Stage and commit all changes.
-            6. Push the branch and open a pull request against main with:
-               - Title starting with "fix:"
-               - Body with Summary, Changes, and "Closes #$ISSUE_NUMBER"
-            7. Post a comment on the issue with the PR link.
+            Run the fix-issue skill by reading and following every step in
+            .claude/commands/fix-issue.md with argument ${{ github.event.issue.number }}.
 
-            You MUST create a pull request before finishing. Do not stop without one.
+            The skill will guide you to:
+              1. Create a branch    (.claude/commands/create-branch.md)
+              2. Analyse the issue  (.claude/commands/analyze-issue.md)
+              3. Develop the fix    (.claude/commands/develop.md)
+              4. Open a PR          (.claude/commands/create-pr.md)
+
+            Do not finish until a pull request has been created and a comment
+            has been posted on issue #${{ github.event.issue.number }} with the PR link.
