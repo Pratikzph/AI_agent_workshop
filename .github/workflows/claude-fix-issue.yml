@@ -40,7 +40,6 @@ jobs:
       - name: Run Claude to analyse and fix the issue
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
           # Extra instructions prepended to every run.
           # Claude already receives the full issue body and thread automatically.
