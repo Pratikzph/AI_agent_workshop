@@ -31,16 +31,34 @@ jobs:
           trigger_phrase: "@claude"
           base_branch: main
           branch_prefix: "fix/"
+          show_full_output: true
           prompt: |
-            Read the issue title and description carefully, then implement the necessary code changes to resolve it.
-            After implementing the fix, create a pull request with:
-            - Title: a concise "fix: <what was resolved>" derived from the actual changes made
-            - Description with these sections:
-              ## Summary
-              What the issue was and how it was fixed.
-              ## Changes
-              Bullet list of files/functions modified and why.
-              ## How to verify
-              Steps to confirm the fix works.
-              ---
-              Closes #${{ github.event.issue.number }}
+            You are fixing GitHub issue #${{ github.event.issue.number }}.
+
+            Issue title: ${{ github.event.issue.title }}
+            Issue body:
+            ${{ github.event.issue.body }}
+
+            Triggered by comment:
+            ${{ github.event.comment.body }}
+
+            Instructions:
+            1. Read the issue title and body above carefully.
+            2. Explore the repository files to understand the codebase.
+            3. Implement the fix by editing or creating the necessary files.
+            4. If the issue asks for a new feature or file, create it.
+            5. Commit your changes to a new branch named fix/issue-${{ github.event.issue.number }}.
+            6. Open a pull request against main with:
+               - Title: "fix: <concise description of what was resolved>"
+               - Body containing:
+                 ## Summary
+                 What the issue was and how it was fixed.
+                 ## Changes
+                 Bullet list of files modified and why.
+                 ## How to verify
+                 Steps to confirm the fix works.
+                 Closes #${{ github.event.issue.number }}
+            7. Post a comment on the issue linking to the PR.
+
+            IMPORTANT: Always make at least one file change and open a PR.
+            Never finish without creating a pull request.
